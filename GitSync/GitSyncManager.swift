@@ -142,7 +142,6 @@ final class SyncTargetViewModel: NSObject, ObservableObject, Identifiable {
 
     private let onChange: () -> Void
     private let logLimit = 250
-    private let minimumSyncIndicatorDuration: TimeInterval = 0.8
     private var lastFailureFingerprint: String?
     private var watcher: FSEventWatcher?
     private var scheduledSyncTask: Task<Void, Never>?
@@ -168,13 +167,10 @@ final class SyncTargetViewModel: NSObject, ObservableObject, Identifiable {
     }
 
     var menuIconName: String {
-        if isPreparing || isSyncingNow {
-            return "arrow.up.circle.fill"
-        }
         if lastErrorMessage != nil {
             return "exclamationmark.triangle.fill"
         }
-        return isRunning ? "checkmark.circle.fill" : "pause.circle.fill"
+        return "checkmark.circle.fill"
     }
 
     var statusLine: String {
@@ -299,7 +295,6 @@ final class SyncTargetViewModel: NSObject, ObservableObject, Identifiable {
     private func performSyncCycle(trigger: String) async {
         guard !isSyncingNow else { return }
 
-        let syncStartedAt = Date()
         isSyncingNow = true
         addLog("\(trigger)")
 
@@ -317,12 +312,6 @@ final class SyncTargetViewModel: NSObject, ObservableObject, Identifiable {
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             fail(message)
-        }
-
-        let elapsed = Date().timeIntervalSince(syncStartedAt)
-        if elapsed < minimumSyncIndicatorDuration {
-            let remaining = minimumSyncIndicatorDuration - elapsed
-            try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
         }
 
         isSyncingNow = false
@@ -633,16 +622,10 @@ final class GitSyncManager: NSObject, ObservableObject {
     }
 
     var menuBarIconName: String {
-        if targets.contains(where: { $0.isPreparing || $0.isSyncingNow }) {
-            return "arrow.trianglehead.2.clockwise.circle.fill"
-        }
         if targets.contains(where: { $0.lastErrorMessage != nil }) {
             return "exclamationmark.triangle.fill"
         }
-        if targets.contains(where: { $0.isRunning }) {
-            return "checkmark.circle.fill"
-        }
-        return "pause.circle.fill"
+        return "checkmark.circle.fill"
     }
 
     @discardableResult
