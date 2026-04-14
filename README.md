@@ -1,38 +1,79 @@
 # VaultSync
 
-VaultSync is a macOS menu bar app for pushing a local vault folder to a Git remote repository.
+VaultSync is a macOS menu bar app for people who keep their Obsidian vault in iCloud Drive, but also want that same vault pushed to Git.
 
-It is designed for folders that live in iCloud Drive or other synced directories, while the hidden base repository is managed separately by the app and linked through a real `git worktree`.
+iCloud Drive is convenient for using Obsidian across Apple devices, but it is not the same thing as keeping a Git history or pushing to GitHub. VaultSync fills that gap: it watches your local vault folder, creates commits when files change, and pushes those changes to a remote Git repository.
 
-## Features
+## Who This Is For
 
-- Menu bar app with a compact status popover
-- Separate setup window for onboarding and editing
-- Real `git worktree`-based vault management
-- One-way sync model: local vault changes are committed and pushed to the remote repository
-- Change detection via macOS file system events instead of constant polling
-- Optional force-push mode with an explicit overwrite warning
-- Korean and English UI copy based on the system language
+VaultSync is mainly for this setup:
+
+- You use Obsidian
+- Your vault lives inside iCloud Drive
+- You want GitHub or another Git remote as an additional backup or sync target
+- You do not want to manually run `git add`, `git commit`, and `git push` every time
+
+## What VaultSync Does
+
+- Watches a local vault folder on macOS
+- Waits briefly after file changes settle
+- Creates a Git commit for local changes
+- Pushes that commit to your remote repository
+- Runs as a lightweight menu bar app
+
+VaultSync uses a real hidden `git worktree` setup internally, so your Obsidian vault can stay where it already is, including inside iCloud Drive.
+
+## Why Not Just Use Git Inside The Vault Folder?
+
+You can, but many people prefer not to directly manage a full visible Git repository inside an iCloud-synced Obsidian folder.
+
+VaultSync keeps the hidden base repository separately under:
+
+`~/Library/Application Support/VaultSync/Repos/<target-id>.git`
+
+Then it links your vault folder to that hidden repository through a real `git worktree`.
+
+This keeps the Git plumbing managed by the app while letting you continue to use the vault folder normally in Obsidian and iCloud Drive.
 
 ## Screenshot
 
 ![VaultSync screenshot](docs/screenshot.png)
 
+## Features
+
+- macOS menu bar app
+- Compact popover for quick status checks
+- Separate setup window for onboarding
+- Real `git worktree`-based internal repository management
+- One-way local-to-remote push flow
+- File change detection using macOS file system events
+- Optional force push with an explicit warning
+- Korean and English UI based on the system language
+
 ## How It Works
 
-VaultSync keeps a hidden base repository under:
+When files inside your vault change, VaultSync:
 
-`~/Library/Application Support/VaultSync/Repos/<target-id>.git`
+1. Detects the file system change
+2. Waits a short time so multiple edits can settle
+3. Creates a local commit if something changed
+4. Pushes the current branch to the configured remote repository
 
-The selected vault folder is attached to that repository as a linked `git worktree`.
+If `Allow remote overwrite` is enabled, VaultSync may use force push. That means files already present in the remote repository can be replaced by your local vault state.
 
-When files inside the vault change, VaultSync:
+## Typical Use Case
 
-1. Waits briefly for file activity to settle
-2. Creates a local Git commit when needed
-3. Pushes the current branch to the configured remote repository
+1. Store your Obsidian vault in iCloud Drive
+2. Open VaultSync
+3. Add a vault
+4. Select your Obsidian vault folder
+5. Enter your Git remote URL
+6. Let VaultSync watch the folder and push local changes automatically
 
-If `Allow remote overwrite` is enabled, VaultSync will use force push. This can replace files that already exist in the remote repository.
+This gives you:
+
+- iCloud Drive for Apple-device sync
+- GitHub or another Git remote for version history and backup
 
 ## Build
 
@@ -65,12 +106,12 @@ xcodebuild \
 1. Launch the app
 2. Click the menu bar icon
 3. Press `Add Vault`
-4. Enter the remote repository URL
-5. Choose the local vault folder
+4. Choose your Obsidian vault folder in iCloud Drive or anywhere else on your Mac
+5. Enter the remote repository URL
 6. Decide whether remote overwrite should be allowed
 7. Finish setup
 
-After setup, VaultSync watches the folder and pushes local changes to the remote repository.
+After setup, VaultSync keeps watching the vault folder and pushing local changes to Git.
 
 ## Privacy
 
